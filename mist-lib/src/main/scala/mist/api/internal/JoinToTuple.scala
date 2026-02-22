@@ -1,7 +1,7 @@
 package mist.api.internal
 
-import shadedshapeless._
-import shadedshapeless.ops.hlist.{Prepend, Tupler}
+import shapeless._
+import shapeless.ops.hlist.{Prepend, Tupler}
 
 trait JoinToTuple[A, B] {
   type Out

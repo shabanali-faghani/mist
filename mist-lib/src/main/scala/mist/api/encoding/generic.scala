@@ -1,7 +1,7 @@
 package mist.api.encoding
 import mist.api.data.JsData
 import mist.api.{Extraction, MObj}
-import shadedshapeless.Lazy
+import shapeless.Lazy
 
 object generic {
 

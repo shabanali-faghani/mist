@@ -2,9 +2,9 @@ package mist.api.encoding
 
 import mist.api._
 import mist.api.data.{JsData, JsMap, JsNull}
-import shadedshapeless.labelled.FieldType
-import shadedshapeless._
-import shadedshapeless.record._
+import shapeless.labelled.FieldType
+import shapeless._
+import shapeless.record._
 
 import scala.annotation.implicitNotFound
 import scala.reflect.ClassTag

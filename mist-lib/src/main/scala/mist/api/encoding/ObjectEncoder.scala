@@ -1,8 +1,8 @@
 package mist.api.encoding
 
 import mist.api.data.{JsData, JsMap}
-import shadedshapeless.labelled.FieldType
-import shadedshapeless._
+import shapeless.labelled.FieldType
+import shapeless._
 
 import scala.annotation.implicitNotFound
 

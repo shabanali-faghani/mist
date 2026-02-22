@@ -24,8 +24,14 @@ lazy val versionRegex = "(\\d+)\\.(\\d+).*".r
 lazy val commonSettings = Seq(
   organization := "io.hydrosphere",
 
-  sparkVersion := sys.props.getOrElse("sparkVersion", "2.4.0"),
-  scalaVersion :=  sys.props.getOrElse("scalaVersion", "2.11.12"),
+//  sparkVersion := sys.props.getOrElse("sparkVersion", "2.4.0"),
+//  scalaVersion :=  sys.props.getOrElse("scalaVersion", "2.11.12"),
+
+//  sparkVersion := sys.props.getOrElse("sparkVersion", "2.4.0"),
+//  scalaVersion :=  sys.props.getOrElse("scalaVersion", "2.12.18"),
+
+  sparkVersion := sys.props.getOrElse("sparkVersion", "4.0.1"),
+  scalaVersion :=  sys.props.getOrElse("scalaVersion", "2.13.16"),
   scalaPostfix := { if (scalaBinaryVersion.value == "2.12") "-scala-2.12" else "" },
   crossScalaVersions := Seq("2.11.12", "2.12.7"),
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
@@ -48,7 +54,8 @@ lazy val mistLib = project.in(file("mist-lib"))
     },
     libraryDependencies ++= Library.spark(sparkVersion.value).map(_ % "provided"),
     libraryDependencies ++= Seq(
-      "io.hydrosphere" %% "shadedshapeless" % "2.3.3",
+//      "io.hydrosphere" %% "shadedshapeless" % "2.3.3",
+      "com.chuusai" %% "shapeless" % "2.3.12",
       Library.slf4j % "test",
       Library.slf4jLog4j % "test",
       Library.scalaTest % "test"
@@ -81,8 +88,10 @@ lazy val master = project.in(file("mist/master"))
   .settings(
     name := "mist-master",
     scalacOptions ++= commonScalacOptions,
-    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.9"),
-    libraryDependencies ++= Library.Akka.base,
+//    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.9"),
+//    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2"),  // or 0.10.3 for older compatibility
+    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),  // or 0.10.3 for older compatibility
+      libraryDependencies ++= Library.Akka.base,
     libraryDependencies ++= Seq(
       Library.slf4jLog4j, Library.typesafeConfig, Library.scopt,
       Library.h2, Library.flyway,
@@ -98,7 +107,8 @@ lazy val master = project.in(file("mist/master"))
 
       Library.dockerJava,
 
-      "io.hydrosphere" %% "shadedshapeless" % "2.3.3",
+//      "io.hydrosphere" %% "shadedshapeless" % "2.3.3",
+      "com.chuusai" %% "shapeless" % "2.3.12",
       Library.commonsCodec, Library.scalajHttp,
       Library.jsr305 % "provided",
 
@@ -300,10 +310,13 @@ lazy val root = project.in(file("."))
   .settings(Defaults.itSettings: _*)
   .settings(
     libraryDependencies ++= Seq(
-      "io.spray" %% "spray-json" % "1.3.2" % "it",
+//      "io.spray" %% "spray-json" % "1.3.2" % "it",
+      "io.spray" %% "spray-json" % "1.3.6" % "it",
       "org.eclipse.paho" % "org.eclipse.paho.client.mqttv3" % "1.1.0" % "it",
-      "org.scalaj" %% "scalaj-http" % "2.3.0" % "it",
-      "org.scalatest" %% "scalatest" % "3.0.1" % "it",
+//      "org.scalaj" %% "scalaj-http" % "2.3.0" % "it",
+      "org.scalaj" %% "scalaj-http" % "2.4.2" % "it",
+//      "org.scalatest" %% "scalatest" % "3.0.1" % "it",
+      "org.scalatest" %% "scalatest" % "3.2.19" % "it",
       "org.scala-lang" % "scala-compiler" % scalaVersion.value % "it"
     ),
     libraryDependencies ++= Library.spark(sparkVersion.value).map(_ % "provided"),
@@ -355,7 +368,9 @@ lazy val docs = project.in(file("docs"))
   .dependsOn(mistLib)
   .settings(commonSettings: _*)
   .settings(
-    scalaVersion := "2.11.12",
+//    scalaVersion := "2.11.12",
+//    scalaVersion := "2.12.18",
+    scalaVersion := "2.13.16",
     libraryDependencies ++= Library.spark(sparkVersion.value),
     micrositeName := "Hydrosphere - Mist",
     micrositeDescription := "Serverless proxy for Spark cluster",
@@ -423,3 +438,29 @@ lazy val commonScalacOptions = Seq(
   "-Ypartial-unification",
   "-deprecation"
 )
+
+
+import sbtassembly.AssemblyPlugin.autoImport._
+
+assembly / assemblyMergeStrategy := {
+  case PathList("javax", "inject", _*) =>
+    MergeStrategy.first
+
+  case PathList("org", "apache", "commons", "logging", _*) =>
+    MergeStrategy.first
+
+  case PathList("org", "apache", "http", _*) =>
+    MergeStrategy.first
+
+  case PathList("org", "newsclub", "net", "unix", _*) =>
+    MergeStrategy.first
+
+  case PathList("META-INF", xs @ _*) =>
+    xs match {
+      case ("MANIFEST.MF" :: Nil) => MergeStrategy.discard
+      case _                      => MergeStrategy.first
+    }
+
+  case _ =>
+    MergeStrategy.first
+}

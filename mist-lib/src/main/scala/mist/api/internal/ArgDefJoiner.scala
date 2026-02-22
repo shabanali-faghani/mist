@@ -1,7 +1,7 @@
 package mist.api.internal
 
 import mist.api.ArgDef
-import shadedshapeless._
+import shapeless._
 
 
 trait ArgDefJoiner[A] {

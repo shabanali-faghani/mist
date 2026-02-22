@@ -1,6 +1,6 @@
 package mist.api.internal
 
-import shadedshapeless._
+import shapeless._
 
 /**
   *  Converts Any or Tuple into HList

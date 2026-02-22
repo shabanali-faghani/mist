@@ -352,7 +352,7 @@ object MasterConfig extends Logger {
     autoConfigure(masterConfig, Eval.later(NetUtils.findLocalInetAddress().getHostAddress))
 
   def autoConfigure(masterConfig: MasterConfig, host: Eval[String]): MasterConfig = {
-    import shadedshapeless._
+    import shapeless._
     type HostLens = Lens[MasterConfig, String]
 
     def updateAuto(s: String, name: String): String = {

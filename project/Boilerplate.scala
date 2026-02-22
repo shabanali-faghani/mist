@@ -53,7 +53,7 @@ object Boilerplate {
       import tv._
       block"""
          |package mist.api.internal
-         |import shadedshapeless._
+         |import shapeless._
          |
          |trait HListerInstances extends LowerPriorityHLister {
          |
