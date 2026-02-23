@@ -1,19 +1,20 @@
 import mist.api._
-import mist.api.dsl._
-import mist.api.encoding.defaults._
-import mist.api.encoding.spark._
-
+import mist.api.encoding._
+import mist.api.data.{JsData, JsList, JsString}
+import mist.api.MistFn
+import org.apache.spark.sql.{Dataset, Row}
 import org.apache.spark.sql.hive.HiveContext
 
 object HiveContextExample extends MistFn {
 
-  override def handle: Handle = {
-    val raw = withArgs(arg[String]("file")).onHiveContext((file: String, hiveCtx: HiveContext) => {
-      val df = hiveCtx.read.json(file)
-      df.registerTempTable("people")
+  // Custom encoder for Dataset[Row]
+  implicit val dsEncoder: JsEncoder[Dataset[Row]] = JsEncoder { ds =>
+    JsList(ds.collect().map(row => JsString(row.mkString(","))).toList)
+  }
 
-      hiveCtx.sql("SELECT AVG(age) AS avg_age FROM people")
-    })
-    raw.asHandle
+  def handle = withHiveContext { (hive: HiveContext) =>
+    import hive.implicits._
+    val ds: Dataset[Row] = hive.sql("SELECT * FROM some_table")
+    ds
   }
 }

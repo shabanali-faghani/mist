@@ -12,7 +12,7 @@ object PublishSettings {
       else
         Some("releases"  at nexus + "service/local/staging/deploy/maven2/")
     },
-    publishArtifact in Test := false,
+    Test / publishArtifact := false,
     pomIncludeRepository := { _ => false },
 
     licenses := Seq("Apache 2.0 License" -> url("https://github.com/Hydrospheredata/mist")),

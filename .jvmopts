@@ -3,4 +3,5 @@
 -Xmx4G
 -XX:ReservedCodeCacheSize=1024m
 -XX:MaxMetaspaceSize=512m
--XX:+CMSClassUnloadingEnabled
+-XX:+UseG1GC
+-XX:+UseStringDeduplication

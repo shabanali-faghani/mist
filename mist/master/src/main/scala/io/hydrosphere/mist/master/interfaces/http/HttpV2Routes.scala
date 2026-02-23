@@ -158,6 +158,16 @@ object HttpV2Routes extends Logger {
 
   import HttpV2Base._
 
+  import akka.http.scaladsl.model.StatusCodes
+  import akka.http.scaladsl.server.directives.FileInfo
+  import java.io.File
+
+  import scala.util.{Success, Failure}
+
+  private val tempDir = new File(System.getProperty("java.io.tmpdir"))
+
+  case class ErrorMessage(message: String)
+
   def workerRoutes(jobService: ExecutionService): Route = {
     path( root / "workers" ) {
       get { complete(jobService.workers()) }
@@ -311,23 +321,27 @@ object HttpV2Routes extends Logger {
             complete { HttpResponse(StatusCodes.OK, entity = s"${f.getName}") }
           }
         }
-        uploadedFile("file") {
-          case (metadata, tempFile) =>
-            if (force) {
-              storeArtifactFile(metadata, tempFile)
-            } else {
-              artifactRepo.get(metadata.fileName) match {
-                case Some(_) => complete {
-                  HttpResponse(
-                    StatusCodes.Conflict,
-                    entity = s"Filename must be unique: found ${metadata.fileName} in repository"
-                  )
+
+        val uploadArtifact = path("api" / "v2" / "artifacts") {
+          post {
+            // Store uploaded file with a function that returns the temp directory
+            storeUploadedFile("file", (_) => tempDir) {
+              case (metadata, file) =>
+                parameters('force ? false) { force =>
+                  onComplete(storeArtifactFile(metadata, file).map(info => info)) {
+                    case Success(info) =>
+                      complete(StatusCodes.Created, info)
+                    case Failure(ex: IllegalArgumentException) =>
+                      val msg = s"Filename must be unique: found ${metadata.fileName} in repository"
+                      complete(StatusCodes.Conflict, ErrorMessage(msg))
+                    case Failure(ex) =>
+                      complete(StatusCodes.InternalServerError, ErrorMessage(ex.getMessage))
+                  }
                 }
-                case None =>
-                  storeArtifactFile(metadata, tempFile)
-              }
             }
+          }
         }
+
       }
     }}}
   }

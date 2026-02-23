@@ -8,6 +8,8 @@ import org.flywaydb.core.Flyway
 
 import scala.concurrent.{ExecutionContext, Future}
 
+import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
+
 trait JobRepository {
 
   def remove(jobId: String): Future[Unit]
@@ -36,7 +38,9 @@ trait JobRepository {
 }
 
 object JobRepository {
-  
+
+  import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
+
   def create(config: DbConfig): Either[Throwable, HikariJobRepository] = {
     for {
       setup  <- JobRepoSetup(config)
@@ -46,11 +50,12 @@ object JobRepository {
   
   private def transactor(setup: JobRepoSetup): Either[Throwable, HikariDataSourceTransactor] = {
     Either.catchNonFatal {
-      val transactor = new HikariDataSourceTransactor(hikariConfig(setup), setup.poolSize)
+//      val transactor = new HikariDataSourceTransactor(hikariConfig(setup), setup.poolSize)
+      val transactor = HikariDataSourceTransactor(hikariDataSource(setup), setup.poolSize)
       setup.migrationPath match {
         case None => transactor
         case Some(path) =>
-          migrate(path, transactor.ds)
+          migrate(path, transactor.dataSource)
           transactor
       }
     }

@@ -115,7 +115,7 @@ object JsMap {
   def of(fields: java.util.List[Field]): JsMap = {
     import scala.collection.JavaConverters._
     val in = fields.asScala.map(f => f.key -> f.value)
-    JsMap(in: _*)
+    JsMap(in.toMap)
   }
 }
 
@@ -126,7 +126,7 @@ final case class JsList(list: Seq[JsData]) extends JsData {
 object JsList {
   def of(elems: java.util.List[JsData]): JsList = {
     import scala.collection.JavaConverters._
-    JsList(elems.asScala)
+    JsList(elems.asScala.toSeq)
   }
 }
 

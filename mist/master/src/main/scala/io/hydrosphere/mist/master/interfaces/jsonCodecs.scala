@@ -57,7 +57,7 @@ trait MDataFormat {
   implicit val mDataFormat = new RootJsonFormat[mdata.JsData] {
     override def read(json: JsValue): mdata.JsData = {
       json match {
-        case JsObject(fields) => mdata.JsMap(fields.mapValues(v => read(v)))
+        case JsObject(fields) => mdata.JsMap(fields.map { case (k, v) => k -> read(v) }.toMap)
         case JsString(s) => mdata.JsString(s)
         case JsNumber(d) => mdata.JsNumber(d)
         case JsFalse => mdata.JsFalse //TODO MBoolean can has default false and true
@@ -76,15 +76,15 @@ trait MDataFormat {
         case mdata.JsNull      => JsNull
         case mdata.JsUnit      => JsObject(Map.empty[String, JsValue])
         case mdata.JsList(values) => JsArray(values.map(v => write(v)).toVector)
-        case mdata.JsMap(map)     => JsObject(map.mapValues(v => write(v)))
+        case mdata.JsMap(map)  => JsObject(map.map { case (k, v) => k -> write(v) }.toMap)
       }
     }
   }
 
   implicit val jsLikeMapFormat = new RootJsonFormat[mdata.JsMap] {
-    override def write(obj: mdata.JsMap): JsValue = JsObject(obj.map.mapValues(v => mDataFormat.write(v)))
+    override def write(obj: mdata.JsMap): JsValue = JsObject(obj.map.map { case (k, v) => k -> mDataFormat.write(v) }.toMap)
     override def read(json: JsValue): mdata.JsMap = json match {
-      case JsObject(fields) => mdata.JsMap(fields.mapValues(v => mDataFormat.read(v)))
+      case JsObject(fields) => mdata.JsMap(fields.map { case (k, v) => k -> mDataFormat.read(v) }.toMap)
       case other => throw new DeserializationException(s"Json object required: got $other")
     }
   }

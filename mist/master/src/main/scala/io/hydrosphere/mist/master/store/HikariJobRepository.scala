@@ -5,6 +5,8 @@ import doobie.implicits._
 
 import scala.concurrent.Future
 
+import cats.effect.unsafe.implicits.global
+
 class HikariJobRepository(
   hikari: HikariDataSourceTransactor,
   jobRequestSql: JobRequestSql
@@ -14,7 +16,7 @@ class HikariJobRepository(
     jobRequestSql.remove(jobId)
       .update
       .run
-      .transact(hikari.transactor)
+      .transact(hikari.rawTransactor)
       .map(_ => {})
       .unsafeToFuture()
   }
@@ -24,7 +26,7 @@ class HikariJobRepository(
       .query[JobDetailsRecord]
       .map(_.toJobDetails)
       .option
-      .transact(hikari.transactor)
+      .transact(hikari.rawTransactor)
       .unsafeToFuture()
   }
 
@@ -32,7 +34,7 @@ class HikariJobRepository(
     jobRequestSql.update(jobDetails)
       .update
       .run
-      .transact(hikari.transactor)
+      .transact(hikari.rawTransactor)
       .map(_ => {})
       .unsafeToFuture()
   }
@@ -42,7 +44,7 @@ class HikariJobRepository(
       .query[JobDetailsRecord]
       .map(_.toJobDetails)
       .to[Seq]
-      .transact(hikari.transactor)
+      .transact(hikari.rawTransactor)
       .unsafeToFuture()
   }
 
@@ -51,7 +53,7 @@ class HikariJobRepository(
       .query[JobDetailsRecord]
       .map(_.toJobDetails)
       .to[Seq]
-      .transact(hikari.transactor)
+      .transact(hikari.rawTransactor)
       .unsafeToFuture()
   }
 
@@ -59,7 +61,7 @@ class HikariJobRepository(
     jobRequestSql.clear
       .update
       .run
-      .transact(hikari.transactor)
+      .transact(hikari.rawTransactor)
       .map(_ => {})
       .unsafeToFuture()
   }
@@ -70,9 +72,9 @@ class HikariJobRepository(
       .map(_.toJobDetails)
       .to[Seq]
       .map(seq => JobDetailsResponse(seq, seq.size))
-      .transact(hikari.transactor)
+      .transact(hikari.rawTransactor)
       .unsafeToFuture()
   }
   
-  def shutdown(): Unit = hikari.shutdown()
+//  def shutdown(): Unit = hikari.shutdown()
 }

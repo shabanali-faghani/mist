@@ -35,7 +35,7 @@ trait defaultEncoders {
     case Some(a) => enc(a)
     case None => JsNull
   }
-  implicit def mapEnc[A](implicit enc: JsEncoder[A]): JsEncoder[Map[String, A]] = JsEncoder(m => JsMap(m.mapValues(enc.apply)))
+  implicit def mapEnc[A](implicit enc: JsEncoder[A]): JsEncoder[Map[String, A]] = JsEncoder(m => JsMap(m.view.mapValues(enc.apply).toMap))
 }
 
 object defaultEncoders extends defaultEncoders

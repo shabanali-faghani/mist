@@ -37,7 +37,7 @@ class MistScContext(
   def javaContext: JavaSparkContext = new JavaSparkContext(sc)
 
   // python support
-  def sqlContext: SQLContext = new SQLContext(sc)
+  def sqlContext: SQLContext = SQLContext.getOrCreate(sc)
 
   // python support
   def hiveContext: HiveContext = new HiveContext(sc)

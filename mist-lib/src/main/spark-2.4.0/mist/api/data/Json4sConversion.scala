@@ -38,8 +38,8 @@ trait Json4sConversion {
       case JsString(s) => JString(s)
       case JsNumber(d) =>
         d.toBigIntExact() match {
-          case Some(x) => JInt(x)
-          case None => JDecimal(d)
+          case Some(x) => JInt(BigInt(x.bigInteger))
+          case None => JDouble(d)
         }
       case JsTrue => JBool(true)
       case JsFalse => JBool(false)

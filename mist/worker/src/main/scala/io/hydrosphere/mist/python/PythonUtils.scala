@@ -8,7 +8,7 @@ object PythonUtils {
 
 
   def toSeq[A](list: java.util.List[A]): Seq[A] = {
-    list.asScala
+    list.asScala.toSeq
   }
 
   def toSeq[A](coll: java.util.Collection[A]): Seq[A] = {

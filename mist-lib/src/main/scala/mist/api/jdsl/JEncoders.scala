@@ -26,7 +26,7 @@ object JEncoders {
 
   def listEncoderOf[T](enc: JsEncoder[T]): JsEncoder[ju.List[T]] = JsEncoder(l => {
     val elems = l.asScala.map(e => enc(e))
-    JsList(elems)
+    JsList(elems.toSeq)
   })
 
   def mapEncoderOf[T](enc: JsEncoder[T]): JsEncoder[ju.Map[String, T]] = JsEncoder(m => {

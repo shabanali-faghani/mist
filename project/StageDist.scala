@@ -32,14 +32,14 @@ object StageDist {
 
 
   private def stageBuildTask(key: TaskKey[File]): Def.Initialize[Task[File]] = Def.task {
-    val log = (streams in key).value.log
-    val dir = (stageDirectory in key).value
+    val log = (key / streams).value.log
+    val dir = (key / stageDirectory).value
     if (dir.exists())
       IO.delete(dir)
 
     if (!dir.exists)
       IO.createDirectory(dir)
-    val actions = (stageActions in key).value
+    val actions = (key / stageActions).value
     actions.foreach({
       case MkDir(name) => mkDir(name, dir)
       case copy: CpFile => copyToDir(copy, dir)

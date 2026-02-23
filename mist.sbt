@@ -6,12 +6,28 @@ import microsites.ConfigYml
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.AssemblyOption
 
+ThisBuild / scalaVersion := "2.13.16"
+
+// Fix insecure resolvers
+ThisBuild / useCoursier := false // Optional - helps with some resolver issues
+
+// Replace with safe resolvers
+ThisBuild / resolvers := Seq(
+  "Maven Central" at "https://repo1.maven.org/maven2/",
+  "Typesafe Releases" at "https://repo.typesafe.org/typesafe/releases/",
+  "Sonatype OSS Releases" at "https://oss.sonatype.org/content/repositories/releases/",
+  "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
+)
+
 resolvers ++= Seq(
+  "Typesafe Releases" at "https://repo.typesafe.org/typesafe/releases/",
+  "Maven Central" at "https://repo1.maven.org/maven2/",
+  "tpolecat" at "https://dl.bintray.com/tpolecat/maven",
   Resolver.sonatypeRepo("releases"),
   Resolver.sonatypeRepo("snapshots"),
-  Resolver.url("artifactory", url("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases"))(Resolver.ivyStylePatterns),
-  "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
-  "maxaf-releases" at s"http://repo.bumnetworks.com/releases/"
+//  Resolver.url("artifactory", url("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases"))(Resolver.ivyStylePatterns),
+//  "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
+//  "maxaf-releases" at s"http://repo.bumnetworks.com/releases/"
 )
 
 lazy val sparkVersion: SettingKey[String] = settingKey[String]("Spark version")
@@ -35,7 +51,7 @@ lazy val commonSettings = Seq(
   scalaPostfix := { if (scalaBinaryVersion.value == "2.12") "-scala-2.12" else "" },
   crossScalaVersions := Seq("2.11.12", "2.12.7"),
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
-  parallelExecution in Test := false,
+  Test / parallelExecution := false,
   version := "1.1.3"
 )
 
@@ -46,8 +62,8 @@ lazy val mistLib = project.in(file("mist-lib"))
   .settings(
     scalacOptions ++= commonScalacOptions,
     name := "mist-lib",
-    sourceGenerators in Compile += (sourceManaged in Compile).map(dir => Boilerplate.gen(dir)).taskValue,
-    unmanagedSourceDirectories in Compile += {
+    Compile / sourceGenerators += (Compile / sourceManaged).map(dir => Boilerplate.gen(dir)).taskValue,
+    Compile / unmanagedSourceDirectories += {
       val sparkV = sparkVersion.value
       val sparkSpecific =  if (sparkV == "2.4.0") "spark-2.4.0" else "spark"
       baseDirectory.value / "src" / "main" / sparkSpecific
@@ -61,8 +77,8 @@ lazy val mistLib = project.in(file("mist-lib"))
       Library.scalaTest % "test"
     ),
     PyProject.pyName := "mistpy",
-    parallelExecution in Test := false,
-    test in Test := Def.sequential(test in Test, PyProject.pyTest in Test).value
+    Test / parallelExecution := false,
+    Test / test := Def.sequential(Test / test, Test / PyProject.pyTest).value
   )
 
 lazy val core = project.in(file("mist/core"))
@@ -127,9 +143,9 @@ lazy val worker = project.in(file("mist/worker"))
   .settings(
     name := "mist-worker",
     scalacOptions ++= commonScalacOptions,
-    resourceGenerators in Compile += {
+    Compile / resourceGenerators += {
       Def.task {
-        val resourceDir = (resourceManaged in Compile).value
+        val resourceDir = (Compile / resourceManaged).value
         val f = (mistLib / PyProject.pySources).value
         val baseOut = resourceDir / "mistpy"
         f.listFiles().toSeq.map(r => {
@@ -146,8 +162,9 @@ lazy val worker = project.in(file("mist/worker"))
       Library.scopt,
       Library.scalaTest % "test"
     ),
-    assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false),
-    assemblyShadeRules in assembly := Seq(
+//    assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false),
+    assembly / assemblyOption := (assembly / assemblyOption).value.withIncludeScala(false),
+    assembly / assemblyShadeRules := Seq(
        ShadeRule.rename("scopt.**" -> "shaded.@0").inAll
     )
   )
@@ -173,15 +190,15 @@ lazy val root = project.in(file("."))
         CpFile(Ui.ui.value).as("ui")
       )
     },
-    stageActions in basicStage += {
+    basicStage / stageActions += {
       val name = imageNames.in(docker).value.head.toString()
       val configData =
         IO.read(file("configs/default.conf"))
           .replaceAll("\\$\\{imageName\\}", name)
       Write("configs/default.conf", configData)
     },
-    stageDirectory in dockerStage := target.value / s"mist-docker-${version.value}",
-    stageActions in dockerStage += {
+    dockerStage / stageDirectory := target.value / s"mist-docker-${version.value}",
+    dockerStage / stageActions += {
       val name = imageNames.in(docker).value.head.toString()
       val configData =
         IO.read(file("configs/docker.conf"))
@@ -189,8 +206,8 @@ lazy val root = project.in(file("."))
       Write("configs/default.conf", configData)
     },
 
-    stageDirectory in runStage := target.value / s"mist-run-${version.value}${scalaPostfix.value}",
-    stageActions in runStage ++= {
+    runStage / stageDirectory := target.value / s"mist-run-${version.value}${scalaPostfix.value}",
+    runStage / stageActions ++= {
       val mkJfunctions = Seq(
         ("spark-ctx-example", "SparkContextExample$"),
         ("jspark-ctx-example", "JavaSparkContextExample"),
@@ -274,10 +291,10 @@ lazy val root = project.in(file("."))
       ps.!<(StdOutLogger)
     }
   ).settings(
-    imageNames in docker := {
+    docker / imageNames := {
       Seq(ImageName(s"hydrosphere/mist:${version.value}-${sparkVersion.value}${scalaPostfix.value}"))
     },
-    dockerfile in docker := {
+    docker / dockerfile := {
       val localSpark = sparkLocal.value
       val mistHome = "/usr/share/mist"
       val distr = dockerStage.value
@@ -320,19 +337,19 @@ lazy val root = project.in(file("."))
       "org.scala-lang" % "scala-compiler" % scalaVersion.value % "it"
     ),
     libraryDependencies ++= Library.spark(sparkVersion.value).map(_ % "provided"),
-    scalaSource in IntegrationTest := baseDirectory.value / "mist-tests" / "scala",
-    resourceDirectory in IntegrationTest := baseDirectory.value / "mist-tests" / "resources",
-    parallelExecution in IntegrationTest := false,
-    fork in IntegrationTest := true,
-    envVars in IntegrationTest ++= Map(
+    IntegrationTest / scalaSource := baseDirectory.value / "mist-tests" / "scala",
+    IntegrationTest / resourceDirectory := baseDirectory.value / "mist-tests" / "resources",
+    IntegrationTest / parallelExecution := false,
+    IntegrationTest / fork := true,
+    IntegrationTest / envVars ++= Map(
       "SPARK_HOME" -> s"${sparkLocal.value}",
       "MIST_HOME" -> s"${basicStage.value}"
     ),
-    javaOptions in IntegrationTest ++= {
+    IntegrationTest / javaOptions ++= {
       val mistHome = runStage.value
       val dockerImage = {
         docker.value
-        (imageNames in docker).value.head
+        (docker / imageNames).value.head
       }
       val examplesJar = sbt.Keys.`package`.in(examples, Compile).value
       Seq(
@@ -405,7 +422,7 @@ lazy val docs = project.in(file("docs"))
 
 
 lazy val commonAssemblySettings = Seq(
-  assemblyMergeStrategy in assembly := {
+  assembly / assemblyMergeStrategy := {
     case m if m.toLowerCase.endsWith("manifest.mf") => MergeStrategy.discard
     case PathList("META-INF", xs @ _*) =>
       (xs map {_.toLowerCase}) match {
@@ -421,8 +438,8 @@ lazy val commonAssemblySettings = Seq(
     case PathList("org", "datanucleus", xs@_*) => MergeStrategy.discard
     case _ => MergeStrategy.first
   },
-  logLevel in assembly := Level.Error,
-  test in assembly := {}
+  assembly / logLevel := Level.Error,
+  assembly / test := {}
 )
 
 lazy val commonScalacOptions = Seq(
@@ -435,7 +452,8 @@ lazy val commonScalacOptions = Seq(
   "-unchecked",
   "-Ywarn-dead-code",
   "-Ywarn-numeric-widen",
-  "-Ypartial-unification",
+//  "-Ypartial-unification",
+  "-Wconf:msg=legacy-binding:s",
   "-deprecation"
 )
 
@@ -463,4 +481,18 @@ assembly / assemblyMergeStrategy := {
 
   case _ =>
     MergeStrategy.first
+}
+
+assembly / assemblyMergeStrategy := {
+  case PathList("javax", "jdo", xs @ _*) => MergeStrategy.last
+  case PathList("org", "apache", "commons", "logging", xs @ _*) => MergeStrategy.first
+  case PathList("com", "google", "thirdparty", xs @ _*) => MergeStrategy.first
+  case PathList("META-INF", "versions", xs @ _*) => MergeStrategy.last
+  case PathList("META-INF", "io.netty.versions.properties") => MergeStrategy.last
+  case PathList("module-info.class") => MergeStrategy.discard
+  case x if x.endsWith("module-info.class") => MergeStrategy.discard
+  case PathList("plugin.xml") => MergeStrategy.first
+  case x =>
+    val oldStrategy = (assembly / assemblyMergeStrategy).value
+    oldStrategy(x)
 }

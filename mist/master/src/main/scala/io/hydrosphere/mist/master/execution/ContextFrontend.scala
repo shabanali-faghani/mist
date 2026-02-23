@@ -106,7 +106,7 @@ class ContextFrontend(
     }
 
     def shouldGoToEmptyWithTimeout(): Boolean = {
-      state.isEmpty && !ctx.precreated && ctx.downtime.isFinite()
+      state.isEmpty && !ctx.precreated && ctx.downtime.isFinite
     }
 
     if (shouldGoToEmptyWithTimeout()) {

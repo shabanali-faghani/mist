@@ -167,7 +167,7 @@ object MasterServer extends Logger {
       security.map(ps => Step.future("Security", ps.stop())) :+
       Step.lift("FunctionInfoProvider", healthRef ! PoisonPill) :+
       Step.future("LogsSystem", logService.close()) :+
-      Step.lift("JobRepository", repository.shutdown()) :+
+      Step.lift("JobRepository", ()) :+
       Step.future("System", {
         materializer.shutdown()
         system.terminate().map(_ => ())
