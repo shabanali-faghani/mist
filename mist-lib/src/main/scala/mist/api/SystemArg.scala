@@ -2,11 +2,21 @@ package mist.api
 
 import mist.api.data.JsMap
 import org.apache.spark.{SparkContext, SparkSessionUtils}
-import org.apache.spark.api.java.JavaSparkContext
-import org.apache.spark.sql.{SQLContext, SparkSession}
-import org.apache.spark.sql.hive.HiveContext
+import org.apache.spark.api.java.{JavaRDD, JavaSparkContext}
+import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.{DataFrame, DataFrameReader, Dataset, Encoder, ExperimentalMethods, Row, RuntimeConfig, SQLContext, SQLImplicits, SparkSession, TableValuedFunction, UDFRegistration}
+import org.apache.spark.sql.catalog.Catalog
+import org.apache.spark.sql.internal.{SessionState, SharedState}
+import org.apache.spark.sql.sources.BaseRelation
+import org.apache.spark.sql.streaming.{DataStreamReader, StreamingQueryManager}
+import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.util.ExecutionListenerManager
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.api.java.JavaStreamingContext
+
+import java.net.URI
+import java.{lang, util}
+import scala.reflect.runtime.universe
 
 trait SystemArg[A] extends ArgDef[A] {
   final def validate(params: JsMap): Extraction[Unit] = Extracted(())
@@ -51,15 +61,15 @@ trait SparkArgs {
 
   // HiveContext should be cached per jvm
   // see #325
-  val hiveContextArg: ArgDef[HiveContext] = new SystemArg[HiveContext] {
+  val hiveContextArg: ArgDef[SparkSession] = new SystemArg[SparkSession] {
 
-    var cache: HiveContext = _
+    var cache: SparkSession = _
 
-    override def extract(ctx: FnContext): Extraction[HiveContext] = synchronized {
+    override def extract(ctx: FnContext): Extraction[SparkSession] = synchronized {
       ctx match {
         case c: FullFnContext =>
           if (cache == null)
-            cache = new HiveContext(c.sc)
+            cache = SparkSession.builder().config(c.sc.getConf).enableHiveSupport().getOrCreate()
           Extracted(cache)
         case _ =>
           Failed.InternalError(s"Unknown type of job context ${ctx.getClass.getSimpleName} expected ${FullFnContext.getClass.getSimpleName}")

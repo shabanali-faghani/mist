@@ -2,7 +2,6 @@ package io.hydrosphere.mist.worker
 
 import org.apache.spark.api.java.JavaSparkContext
 import org.apache.spark.sql.{SQLContext, SparkSession}
-import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.streaming.{Duration => SDuration}
 import org.apache.spark.{SparkConf, SparkContext, SparkSessionUtils}
 
@@ -40,7 +39,7 @@ class MistScContext(
   def sqlContext: SQLContext = SQLContext.getOrCreate(sc)
 
   // python support
-  def hiveContext: HiveContext = new HiveContext(sc)
+//  def hiveContext: HiveContext = new HiveContext(sc)
 
   def sparkSession(enableHive: Boolean): SparkSession = SparkSessionUtils.getOrCreate(sc, enableHive)
 

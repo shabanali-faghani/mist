@@ -328,16 +328,10 @@ object HttpV2Routes extends Logger {
             storeUploadedFile("file", (_) => tempDir) {
               case (metadata, file) =>
                 parameters('force ? false) { force =>
-                  onComplete(storeArtifactFile(metadata, file).map(info => info)) {
-                    case Success(info) =>
-                      complete(StatusCodes.Created, info)
-                    case Failure(ex: IllegalArgumentException) =>
-                      val msg = s"Filename must be unique: found ${metadata.fileName} in repository"
-                      complete(StatusCodes.Conflict, ErrorMessage(msg))
-                    case Failure(ex) =>
-                      complete(StatusCodes.InternalServerError, ErrorMessage(ex.getMessage))
-                  }
-                }
+                  onComplete(storeArtifactFile(metadata, file)) {
+                    case Success(info) => complete(info)
+                    case Failure(e)    => complete(StatusCodes.InternalServerError -> e.getMessage)
+                  }                }
             }
           }
         }

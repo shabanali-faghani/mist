@@ -1,15 +1,13 @@
 import sbt.Keys._
 import StageDist._
 import complete.DefaultParsers._
-import microsites._
-import microsites.ConfigYml
 import sbtassembly.AssemblyPlugin.autoImport._
 import sbtassembly.AssemblyOption
 
 ThisBuild / scalaVersion := "2.13.16"
 
 // Fix insecure resolvers
-ThisBuild / useCoursier := false // Optional - helps with some resolver issues
+ThisBuild / useCoursier := true // Optional - helps with some resolver issues
 
 // Replace with safe resolvers
 ThisBuild / resolvers := Seq(
@@ -19,16 +17,14 @@ ThisBuild / resolvers := Seq(
   "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
 )
 
-resolvers ++= Seq(
-  "Typesafe Releases" at "https://repo.typesafe.org/typesafe/releases/",
-  "Maven Central" at "https://repo1.maven.org/maven2/",
-  "tpolecat" at "https://dl.bintray.com/tpolecat/maven",
-  Resolver.sonatypeRepo("releases"),
-  Resolver.sonatypeRepo("snapshots"),
-//  Resolver.url("artifactory", url("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases"))(Resolver.ivyStylePatterns),
-//  "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
-//  "maxaf-releases" at s"http://repo.bumnetworks.com/releases/"
-)
+libraryDependencySchemes +=
+  "org.scala-lang.modules" %% "scala-parser-combinators" % "early-semver"
+
+dependencyOverrides +=
+  "org.scala-lang.modules" %% "scala-parser-combinators" % "2.0.0"
+
+resolvers ++= Resolver.sonatypeOssRepos("releases")
+//resolvers += "Typesafe Releases" at "https://repo.typesafe.org/typesafe/releases"
 
 lazy val sparkVersion: SettingKey[String] = settingKey[String]("Spark version")
 lazy val scalaPostfix: SettingKey[String] = settingKey[String]("Scala version postfix")
@@ -49,8 +45,9 @@ lazy val commonSettings = Seq(
   sparkVersion := sys.props.getOrElse("sparkVersion", "4.0.1"),
   scalaVersion :=  sys.props.getOrElse("scalaVersion", "2.13.16"),
   scalaPostfix := { if (scalaBinaryVersion.value == "2.12") "-scala-2.12" else "" },
-  crossScalaVersions := Seq("2.11.12", "2.12.7"),
-  javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
+  crossScalaVersions := Seq("2.13.16"),
+//  javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
+  javacOptions ++= Seq("--release", "17"),
   Test / parallelExecution := false,
   version := "1.1.3"
 )
@@ -73,7 +70,7 @@ lazy val mistLib = project.in(file("mist-lib"))
 //      "io.hydrosphere" %% "shadedshapeless" % "2.3.3",
       "com.chuusai" %% "shapeless" % "2.3.12",
       Library.slf4j % "test",
-      Library.slf4jLog4j % "test",
+//      Library.slf4jLog4j % "test",
       Library.scalaTest % "test"
     ),
     PyProject.pyName := "mistpy",
@@ -106,10 +103,10 @@ lazy val master = project.in(file("mist/master"))
     scalacOptions ++= commonScalacOptions,
 //    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.9"),
 //    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2"),  // or 0.10.3 for older compatibility
-    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),  // or 0.10.3 for older compatibility
+    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
       libraryDependencies ++= Library.Akka.base,
     libraryDependencies ++= Seq(
-      Library.slf4jLog4j, Library.typesafeConfig, Library.scopt,
+//      Library.slf4jLog4j, Library.typesafeConfig, Library.scopt,
       Library.h2, Library.flyway,
       Library.chill,
       Library.kafka, Library.pahoMqtt,
@@ -323,44 +320,8 @@ lazy val root = project.in(file("."))
         run("chmod", "+x", "/docker-entrypoint.sh")
       }
     })
-  .configs(IntegrationTest)
-  .settings(Defaults.itSettings: _*)
   .settings(
-    libraryDependencies ++= Seq(
-//      "io.spray" %% "spray-json" % "1.3.2" % "it",
-      "io.spray" %% "spray-json" % "1.3.6" % "it",
-      "org.eclipse.paho" % "org.eclipse.paho.client.mqttv3" % "1.1.0" % "it",
-//      "org.scalaj" %% "scalaj-http" % "2.3.0" % "it",
-      "org.scalaj" %% "scalaj-http" % "2.4.2" % "it",
-//      "org.scalatest" %% "scalatest" % "3.0.1" % "it",
-      "org.scalatest" %% "scalatest" % "3.2.19" % "it",
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value % "it"
-    ),
     libraryDependencies ++= Library.spark(sparkVersion.value).map(_ % "provided"),
-    IntegrationTest / scalaSource := baseDirectory.value / "mist-tests" / "scala",
-    IntegrationTest / resourceDirectory := baseDirectory.value / "mist-tests" / "resources",
-    IntegrationTest / parallelExecution := false,
-    IntegrationTest / fork := true,
-    IntegrationTest / envVars ++= Map(
-      "SPARK_HOME" -> s"${sparkLocal.value}",
-      "MIST_HOME" -> s"${basicStage.value}"
-    ),
-    IntegrationTest / javaOptions ++= {
-      val mistHome = runStage.value
-      val dockerImage = {
-        docker.value
-        (docker / imageNames).value.head
-      }
-      val examplesJar = sbt.Keys.`package`.in(examples, Compile).value
-      Seq(
-        s"-DexamplesJar=$examplesJar",
-        s"-DimageName=$dockerImage",
-        s"-DsparkHome=${sparkLocal.value}",
-        s"-DmistHome=$mistHome",
-        s"-DsparkVersion=${sparkVersion.value}",
-        "-Xmx512m"
-      )
-    }
   )
 
 addCommandAlias("testAll", ";test;it:test")
@@ -380,46 +341,11 @@ lazy val examples = project.in(file("examples/examples"))
     PyProject.pyName := "mist_examples"
   )
 
-lazy val docs = project.in(file("docs"))
-  .enablePlugins(MicrositesPlugin)
-  .dependsOn(mistLib)
-  .settings(commonSettings: _*)
-  .settings(
-//    scalaVersion := "2.11.12",
-//    scalaVersion := "2.12.18",
-    scalaVersion := "2.13.16",
-    libraryDependencies ++= Library.spark(sparkVersion.value),
-    micrositeName := "Hydrosphere - Mist",
-    micrositeDescription := "Serverless proxy for Spark cluster",
-    micrositeAuthor := "hydrosphere.io",
-    micrositeHighlightTheme := "atom-one-light",
-    micrositeDocumentationUrl := "api",
-    micrositeGithubOwner := "Hydrospheredata",
-    micrositeGithubRepo := "mist",
-    micrositeBaseUrl := "/mist-docs",
-    micrositePalette := Map(
-      "brand-primary" -> "#052150",
-      "brand-secondary" -> "#081440",
-      "brand-tertiary" -> "#052150",
-      "gray-dark" -> "#48494B",
-      "gray" -> "#7D7E7D",
-      "gray-light" -> "#E5E6E5",
-      "gray-lighter" -> "#F4F3F4",
-      "white-color" -> "#FFFFFF"),
-    ghpagesNoJekyll := false,
-    git.remoteRepo := "git@github.com:Hydrospheredata/mist.git",
-    micrositeConfigYaml := ConfigYml(
-      yamlCustomProperties = Map("version" -> version.value)
-    ),
-    micrositeFavicons := {
-      Seq("16", "32", "48", "72", "96", "192", "194").map(s => {
-        val size = s + "x" + s
-        MicrositeFavicon(s"favicon-$size.png", size)
-      })
-    },
-    micrositeAnalyticsToken := "UA-76326820-1"
+libraryDependencies += "com.github.scopt" %% "scopt" % "4.1.0"
+libraryDependencies ++= Seq(
+  "com.zaxxer" % "HikariCP" % "5.0.1",
+  "org.flywaydb" % "flyway-core" % "9.20.0"
 )
-
 
 lazy val commonAssemblySettings = Seq(
   assembly / assemblyMergeStrategy := {

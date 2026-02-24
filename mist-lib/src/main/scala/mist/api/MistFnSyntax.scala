@@ -2,8 +2,8 @@ package mist.api
 
 import org.apache.spark.{SparkContext, SparkSessionUtils}
 import org.apache.spark.api.java.JavaSparkContext
-import org.apache.spark.sql.{SQLContext, SparkSession}
-import org.apache.spark.sql.hive.HiveContext
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.streaming.api.java.JavaStreamingContext
 import SparkArgs._
@@ -82,11 +82,11 @@ trait MistFnSyntax {
     /**
       * Define job execution function that takes current arguments and org.apache.spark.sql.hive.HiveContext
       */
-    def onHiveContext[F, Cmb, Out](f: F)(
-      implicit
-      cmb: ArgCombiner.Aux[A, HiveContext, Cmb],
-      fnT: FnForTuple.Aux[Cmb, F, Out]
-    ): RawHandle[Out] = args.combine(hiveContextArg).apply(f)
+//    def onSparkSession[F, Cmb, Out](f: F)(
+//      implicit
+//      cmb: ArgCombiner.Aux[A, SparkSession, Cmb],
+//      fnT: FnForTuple.Aux[Cmb, F, Out]
+//    ): RawHandle[Out] = args.combine(hiveContextArg).apply(f)
 
     def onSparkSession[F, Cmb, Out](f: F)(
       implicit
@@ -124,8 +124,8 @@ trait MistFnSyntax {
   /**
     * Define job execution function that takes only org.apache.spark.sql.hive.HiveContext as an argument.
     */
-  def onHiveContext[F, Out](f: F)(implicit fnT: FnForTuple.Aux[HiveContext, F, Out]): RawHandle[Out] =
-    hiveContextArg.apply(f)
+//  def onSparkSession[F, Out](f: F)(implicit fnT: FnForTuple.Aux[SparkSession, F, Out]): RawHandle[Out] =
+//    hiveContextArg.apply(f)
 
   /**
     * Define job execution function that takes only org.apache.spark.sql.SparkSession as an argument.

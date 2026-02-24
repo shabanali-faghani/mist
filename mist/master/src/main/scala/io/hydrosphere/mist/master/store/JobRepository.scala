@@ -62,11 +62,13 @@ object JobRepository {
   }
   
   private def migrate(migrationPath: String, ds: DataSource): Unit = {
-    val flyway = new Flyway()
-    flyway.setBaselineOnMigrate(true)
-    flyway.setLocations(migrationPath)
-    flyway.setDataSource(ds)
+    val flyway = Flyway.configure().dataSource(ds).load()
     flyway.migrate()
+//    val flyway = new Flyway()
+//    flyway.setBaselineOnMigrate(true)
+//    flyway.setLocations(migrationPath)
+//    flyway.setDataSource(ds)
+//    flyway.migrate()
   }
   
   private def hikariConfig(setup: JobRepoSetup): HikariConfig = {
