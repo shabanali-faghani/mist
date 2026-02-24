@@ -70,7 +70,12 @@ object JobRepository {
 //    flyway.setDataSource(ds)
 //    flyway.migrate()
   }
-  
+
+  private def hikariDataSource(setup: JobRepoSetup): HikariDataSource = {
+    val config = hikariConfig(setup)
+    new HikariDataSource(config)
+  }
+
   private def hikariConfig(setup: JobRepoSetup): HikariConfig = {
     import setup._
     

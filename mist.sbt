@@ -130,7 +130,9 @@ lazy val master = project.in(file("mist/master"))
     )
   ).settings(
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sparkVersion),
-    buildInfoPackage := "io.hydrosphere.mist"
+    buildInfoPackage := "io.hydrosphere.mist",
+    libraryDependencies += "com.github.scopt" %% "scopt" % "4.1.0",
+    libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.4.14"
   )
 
 lazy val worker = project.in(file("mist/worker"))
@@ -342,10 +344,6 @@ lazy val examples = project.in(file("examples/examples"))
   )
 
 libraryDependencies += "com.github.scopt" %% "scopt" % "4.1.0"
-libraryDependencies ++= Seq(
-  "com.zaxxer" % "HikariCP" % "5.0.1",
-  "org.flywaydb" % "flyway-core" % "9.20.0"
-)
 
 lazy val commonAssemblySettings = Seq(
   assembly / assemblyMergeStrategy := {

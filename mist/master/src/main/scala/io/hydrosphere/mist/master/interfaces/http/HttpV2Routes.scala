@@ -281,63 +281,59 @@ object HttpV2Routes extends Logger {
         }
       }
     } ~
-    path(root / "artifacts" / Segment) { filename =>
-      get {
-        artifactRepo.get(filename) match {
-          case Some(file) => getFromFile(file)
-          case None => complete {
-            HttpResponse(StatusCodes.NotFound, entity = s"No file found by name $filename")
-          }
-        }
-      }
-    } ~
-    path(root / "artifacts" / Segment) { filename =>
-      delete {
-        artifactRepo.delete(filename) match {
-          case Some(_) => complete(HttpResponse(StatusCodes.OK, entity = filename))
-          case None => complete {
-            HttpResponse(StatusCodes.NotFound, entity = s"No file found by name $filename")
-          }
-        }
-      }
-    } ~
-    path(root / "artifacts" / Segment / "sha" ) { filename =>
-      get {
-        artifactRepo.get(filename) match {
-          case Some(file) => complete {
-            DigestUtils.sha1Hex(Files.newInputStream(file.toPath))
-          }
-          case None => complete {
-            HttpResponse(StatusCodes.NotFound, entity = s"No file found by name $filename")
-          }
-        }
-      }
-    } ~
-    path(root / "artifacts") {
-      post { parameters('force? false) { force => {
-        def storeArtifactFile(metadata: FileInfo, tempFile: File): Route = {
-          onSuccess(artifactRepo.store(tempFile, metadata.fileName)) { f =>
-            tempFile.delete
-            complete { HttpResponse(StatusCodes.OK, entity = s"${f.getName}") }
-          }
-        }
-
-        val uploadArtifact = path("api" / "v2" / "artifacts") {
-          post {
-            // Store uploaded file with a function that returns the temp directory
-            storeUploadedFile("file", (_) => tempDir) {
-              case (metadata, file) =>
-                parameters('force ? false) { force =>
-                  onComplete(storeArtifactFile(metadata, file)) {
-                    case Success(info) => complete(info)
-                    case Failure(e)    => complete(StatusCodes.InternalServerError -> e.getMessage)
-                  }                }
+      path(root / "artifacts" / Segment) { filename =>
+        get {
+          artifactRepo.get(filename) match {
+            case Some(file) => getFromFile(file)
+            case None => complete {
+              HttpResponse(StatusCodes.NotFound, entity = s"No file found by name $filename")
             }
           }
         }
+      } ~
+      path(root / "artifacts" / Segment) { filename =>
+        delete {
+          artifactRepo.delete(filename) match {
+            case Some(_) => complete(HttpResponse(StatusCodes.OK, entity = filename))
+            case None => complete {
+              HttpResponse(StatusCodes.NotFound, entity = s"No file found by name $filename")
+            }
+          }
+        }
+      } ~
+      path(root / "artifacts" / Segment / "sha") { filename =>
+        get {
+          artifactRepo.get(filename) match {
+            case Some(file) => complete {
+              DigestUtils.sha1Hex(Files.newInputStream(file.toPath))
+            }
+            case None => complete {
+              HttpResponse(StatusCodes.NotFound, entity = s"No file found by name $filename")
+            }
+          }
+        }
+      } ~
+      path(root / "artifacts") {
+        post {
+          storeUploadedFile("file", _ => tempDir) {
+            case (metadata, file) =>
 
+              def storeArtifactFile(metadata: FileInfo, tempFile: File): Future[String] =
+                artifactRepo.store(tempFile, metadata.fileName).map { f =>
+                  tempFile.delete()
+                  f.getName
+                }
+
+              onComplete(storeArtifactFile(metadata, file)) {
+                case Success(info) =>
+                  complete(StatusCodes.OK -> info)
+
+                case Failure(e) =>
+                  complete(StatusCodes.InternalServerError -> e.getMessage)
+              }
+          }
+        }
       }
-    }}}
   }
 
   def internalArtifacts(mistHome: String): Route = {
