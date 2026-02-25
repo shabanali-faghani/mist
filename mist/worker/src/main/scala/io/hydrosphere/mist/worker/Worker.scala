@@ -19,7 +19,7 @@ case class WorkerArguments(
   workDirectory: String = sys.env.getOrElse("MIST_HOME", ".")
 ) {
 
-  def masterNode: String = s"akka.tcp://mist@$masterAddress"
+  def masterNode: String = s"akka://mist@$masterAddress"
 
   def bindHost: String = bindAddress.split(":")(0)
   def bindPort: Int = bindAddress.split(":")(1).toInt
@@ -70,9 +70,10 @@ object Worker extends App with Logger {
     logger.info(s"Try starting on spark: ${org.apache.spark.SPARK_VERSION}, master: ${arguments.masterNode}")
 
     val config = ConfigFactory.load("worker")
-      .withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef(arguments.bindHost))
-      .withValue("akka.remote.netty.tcp.bind-hostname", ConfigValueFactory.fromAnyRef("0.0.0.0"))
-      .withValue("akka.remote.netty.tcp.port", ConfigValueFactory.fromAnyRef(arguments.bindPort))
+      .withValue("akka.remote.artery.canonical.hostname", ConfigValueFactory.fromAnyRef(arguments.bindHost))
+      .withValue("akka.remote.artery.bind.hostname", ConfigValueFactory.fromAnyRef("0.0.0.0"))
+      .withValue("akka.remote.artery.canonical.port", ConfigValueFactory.fromAnyRef(arguments.bindPort))
+      .withValue("akka.remote.artery.bind.port", ConfigValueFactory.fromAnyRef(arguments.bindPort))
 
     val system = ActorSystem(s"mist-worker-$name", config)
 

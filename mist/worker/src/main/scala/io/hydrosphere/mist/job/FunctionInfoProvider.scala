@@ -76,7 +76,7 @@ object FunctionInfoProvider extends App with Logger {
     }
 
     def remotePath(name: String): String = {
-      s"akka.tcp://mist@${functionInfoProviderArguments.clusterAddr}/user/$name"
+      s"akka://mist@${functionInfoProviderArguments.clusterAddr}/user/$name"
     }
 
     val registerRef = resolveRemote(remotePath(CommonData.FunctionInfoProviderRegisterActorName))

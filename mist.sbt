@@ -2,14 +2,11 @@ import sbt.Keys._
 import StageDist._
 import complete.DefaultParsers._
 import sbtassembly.AssemblyPlugin.autoImport._
-import sbtassembly.AssemblyOption
 
 ThisBuild / scalaVersion := "2.13.16"
 
-// Fix insecure resolvers
-ThisBuild / useCoursier := true // Optional - helps with some resolver issues
+ThisBuild / useCoursier := true
 
-// Replace with safe resolvers
 ThisBuild / resolvers := Seq(
   "Maven Central" at "https://repo1.maven.org/maven2/",
   "Typesafe Releases" at "https://repo.typesafe.org/typesafe/releases/",
@@ -24,7 +21,6 @@ dependencyOverrides +=
   "org.scala-lang.modules" %% "scala-parser-combinators" % "2.0.0"
 
 resolvers ++= Resolver.sonatypeOssRepos("releases")
-//resolvers += "Typesafe Releases" at "https://repo.typesafe.org/typesafe/releases"
 
 lazy val sparkVersion: SettingKey[String] = settingKey[String]("Spark version")
 lazy val scalaPostfix: SettingKey[String] = settingKey[String]("Scala version postfix")
@@ -35,18 +31,10 @@ lazy val versionRegex = "(\\d+)\\.(\\d+).*".r
 
 lazy val commonSettings = Seq(
   organization := "io.hydrosphere",
-
-//  sparkVersion := sys.props.getOrElse("sparkVersion", "2.4.0"),
-//  scalaVersion :=  sys.props.getOrElse("scalaVersion", "2.11.12"),
-
-//  sparkVersion := sys.props.getOrElse("sparkVersion", "2.4.0"),
-//  scalaVersion :=  sys.props.getOrElse("scalaVersion", "2.12.18"),
-
   sparkVersion := sys.props.getOrElse("sparkVersion", "4.0.1"),
   scalaVersion :=  sys.props.getOrElse("scalaVersion", "2.13.16"),
   scalaPostfix := { if (scalaBinaryVersion.value == "2.12") "-scala-2.12" else "" },
   crossScalaVersions := Seq("2.13.16"),
-//  javacOptions ++= Seq("-source", "1.8", "-target", "1.8"),
   javacOptions ++= Seq("--release", "17"),
   Test / parallelExecution := false,
   version := "1.1.3"
@@ -67,10 +55,9 @@ lazy val mistLib = project.in(file("mist-lib"))
     },
     libraryDependencies ++= Library.spark(sparkVersion.value).map(_ % "provided"),
     libraryDependencies ++= Seq(
-//      "io.hydrosphere" %% "shadedshapeless" % "2.3.3",
+      // "io.hydrosphere" %% "shadedshapeless" % "2.3.3",
       "com.chuusai" %% "shapeless" % "2.3.12",
       Library.slf4j % "test",
-//      Library.slf4jLog4j % "test",
       Library.scalaTest % "test"
     ),
     PyProject.pyName := "mistpy",
@@ -101,12 +88,10 @@ lazy val master = project.in(file("mist/master"))
   .settings(
     name := "mist-master",
     scalacOptions ++= commonScalacOptions,
-//    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.9"),
-//    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2"),  // or 0.10.3 for older compatibility
     addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
       libraryDependencies ++= Library.Akka.base,
     libraryDependencies ++= Seq(
-//      Library.slf4jLog4j, Library.typesafeConfig, Library.scopt,
+      Library.logbackClassic, Library.typesafeConfig, Library.scopt,
       Library.h2, Library.flyway,
       Library.chill,
       Library.kafka, Library.pahoMqtt,
@@ -120,7 +105,7 @@ lazy val master = project.in(file("mist/master"))
 
       Library.dockerJava,
 
-//      "io.hydrosphere" %% "shadedshapeless" % "2.3.3",
+      // "io.hydrosphere" %% "shadedshapeless" % "2.3.3",
       "com.chuusai" %% "shapeless" % "2.3.12",
       Library.commonsCodec, Library.scalajHttp,
       Library.jsr305 % "provided",
@@ -130,9 +115,7 @@ lazy val master = project.in(file("mist/master"))
     )
   ).settings(
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sparkVersion),
-    buildInfoPackage := "io.hydrosphere.mist",
-    libraryDependencies += "com.github.scopt" %% "scopt" % "4.1.0",
-    libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.4.14"
+    buildInfoPackage := "io.hydrosphere.mist"
   )
 
 lazy val worker = project.in(file("mist/worker"))
@@ -161,7 +144,6 @@ lazy val worker = project.in(file("mist/worker"))
       Library.scopt,
       Library.scalaTest % "test"
     ),
-//    assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false),
     assembly / assemblyOption := (assembly / assemblyOption).value.withIncludeScala(false),
     assembly / assemblyShadeRules := Seq(
        ShadeRule.rename("scopt.**" -> "shaded.@0").inAll
@@ -343,8 +325,6 @@ lazy val examples = project.in(file("examples/examples"))
     PyProject.pyName := "mist_examples"
   )
 
-libraryDependencies += "com.github.scopt" %% "scopt" % "4.1.0"
-
 lazy val commonAssemblySettings = Seq(
   assembly / assemblyMergeStrategy := {
     case m if m.toLowerCase.endsWith("manifest.mf") => MergeStrategy.discard
@@ -376,13 +356,10 @@ lazy val commonScalacOptions = Seq(
   "-unchecked",
   "-Ywarn-dead-code",
   "-Ywarn-numeric-widen",
-//  "-Ypartial-unification",
   "-Wconf:msg=legacy-binding:s",
   "-deprecation"
 )
 
-
-import sbtassembly.AssemblyPlugin.autoImport._
 
 assembly / assemblyMergeStrategy := {
   case PathList("javax", "inject", _*) =>
