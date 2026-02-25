@@ -1,3 +1,43 @@
+# ⚡ Hydrosphere Mist (Fork)
+
+[![Scala 2.13](https://img.shields.io/badge/Scala-2.13-red.svg)](https://scala-lang.org/)
+[![Apache Spark 4](https://img.shields.io/badge/Spark-4.x-blue.svg)](https://spark.apache.org/)
+
+## 📌 This Fork
+
+This is a community-maintained fork of [Hydrosphere Mist](https://github.com/Hydrospheredata/mist) adapted to support **Scala 2.13.16** and ensure compatibility with **Apache Spark 4**.
+
+### Why this fork?
+
+The original Hydrosphere Mist is built with Scala 2.12 / 2.11 and does not work out-of-the-box with Apache Spark 4, which requires Scala 2.13.
+
+### Changes in this fork
+
+- ✅ **Scala 2.13.16** – Upgraded from earlier Scala versions
+- ✅ **Apache Spark 4 compatibility** – Modified dependencies and build configuration to work with Spark 4.x
+- ✅ Builds successfully with Scala 2.13.16
+
+See the commits ahead of `Hydrospheredata/mist:master` for changes in detail.
+
+### ⚠️ Important Note: H2 Database Upgrade
+
+This fork includes an upgrade to a newer version of the H2 database. Due to changes in H2's storage format, **existing `.db` files from previous Mist versions are incompatible and must be removed** before starting the newly built Mist.
+
+**Before running the new version:**
+
+```bash
+  rm -f /path/to/mist/recovery.*.db   
+  # Remove old H2 database files or backup and manually migrate after new .db files created
+```
+
+### Build Instructions
+
+```bash
+  sbt ++2.13.16 clean assembly
+```
+---  
+
+
 [![Build Status](https://ci.hydrosphere.io/buildStatus/icon?job=hydrosphere.io/mist/master)](https://ci.hydrosphere.io/job/hydrosphere.io/job/mist/job/master/)
 [![Build Status](https://travis-ci.org/Hydrospheredata/mist.svg?branch=master)](https://travis-ci.org/Hydrospheredata)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.hydrosphere/mist-lib_2.11/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.hydrosphere/mist-lib_2.11/)

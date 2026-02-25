@@ -1,7 +1,6 @@
 package io.hydrosphere.mist.master
 
 import java.io.File
-
 import cats.Eval
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory, ConfigValueType}
 import io.hydrosphere.mist.utils.ConfigUtils._
@@ -12,6 +11,7 @@ import cats.data.Reader
 import cats.syntax._
 import cats.implicits._
 import io.hydrosphere.mist.utils.{Logger, NetUtils}
+import org.specs2.control.Properties.aProperty
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -376,8 +376,10 @@ object MasterConfig extends Logger {
     ).map({case (l, n) => modify(l, n)(_)})
 
     val akkaUpd = (c: MasterConfig) => optic.raw.modify(c)(r => {
-      r.withValue("akka.remote.netty.tcp.hostname", ConfigValueFactory.fromAnyRef(c.cluster.publicHost))
-       .withValue("akka.remote.netty.tcp.bind-hostname", ConfigValueFactory.fromAnyRef(c.cluster.host))
+      r.withValue("akka.remote.artery.canonical.hostname", ConfigValueFactory.fromAnyRef(c.cluster.publicHost))
+        .withValue("akka.remote.artery.bind.hostname", ConfigValueFactory.fromAnyRef(c.cluster.host))
+//        .withValue("akka.remote.artery.canonical.port", ConfigValueFactory.fromAnyRef(c.cluster.port))
+//        .withValue("akka.remote.artery.bind.port", ConfigValueFactory.fromAnyRef(c.cluster.port))
     })
 
     val all = (fieldsUpd :+ akkaUpd).reduceLeft(_ >>> _)

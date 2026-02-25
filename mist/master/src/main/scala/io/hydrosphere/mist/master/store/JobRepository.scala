@@ -1,14 +1,11 @@
 package io.hydrosphere.mist.master.store
 
 import cats.implicits._
-import com.zaxxer.hikari.HikariConfig
 import io.hydrosphere.mist.master.{DbConfig, JobDetails, JobDetailsRequest, JobDetailsResponse}
-import javax.sql.DataSource
 import org.flywaydb.core.Flyway
 
+import javax.sql.DataSource
 import scala.concurrent.{ExecutionContext, Future}
-
-import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 
 trait JobRepository {
 
@@ -62,13 +59,12 @@ object JobRepository {
   }
   
   private def migrate(migrationPath: String, ds: DataSource): Unit = {
-    val flyway = Flyway.configure().dataSource(ds).load()
+    val flyway = Flyway.configure()
+      .dataSource(ds)
+      .baselineOnMigrate(true)
+      .locations(migrationPath)
+      .load()
     flyway.migrate()
-//    val flyway = new Flyway()
-//    flyway.setBaselineOnMigrate(true)
-//    flyway.setLocations(migrationPath)
-//    flyway.setDataSource(ds)
-//    flyway.migrate()
   }
 
   private def hikariDataSource(setup: JobRepoSetup): HikariDataSource = {
