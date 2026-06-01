@@ -80,7 +80,9 @@ function stopMist() {
   else
      echo "Mist is not runned"
      exit 1
-  fi    
+  fi
+  # workaround for stop worker when stop master
+  kill -9 $(ps -ef | grep FunctionInfoProvider | grep -v grep | awk '{print $2}')
 }
 
 case $CMD in
