@@ -52,8 +52,8 @@ function startMist() {
 
   if  [ "$DEBUG" == "true" ]
   then
-    LOGGER_CONF=$MIST_HOME/configs/logging/log4j.debug.properties  
-    MIST_OPTS="$MIST_OPTS -Dlog4j.configuration=file:$LOGGER_CONF"
+    LOGGER_CONF=$MIST_HOME/configs/logging/logback.debug.xml
+    MIST_OPTS="$MIST_OPTS -Dlogback.configurationFile=file:$LOGGER_CONF"
     exec $JAVA -cp $ASSEMBLY_JAR $MIST_OPTS io.hydrosphere.mist.master.Master $ORIGIN_ARGS
   else
     if [ -f $PID_FILE ]; then
@@ -65,8 +65,8 @@ function startMist() {
         rm -f $PID_FILE
       fi    
     fi
-    LOGGER_CONF=$MIST_HOME/configs/logging/log4j.default.properties  
-    MIST_OPTS="$MIST_OPTS -Dlog4j.configuration=file:$LOGGER_CONF"
+    LOGGER_CONF=$MIST_HOME/configs/logging/logback.default.xml
+    MIST_OPTS="$MIST_OPTS -Dlogback.configurationFile=file:$LOGGER_CONF"
     $JAVA -cp $ASSEMBLY_JAR $MIST_OPTS io.hydrosphere.mist.master.Master $ORIGIN_ARGS &
     echo $! > $PID_FILE
   fi

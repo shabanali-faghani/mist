@@ -4,6 +4,7 @@ object Library {
 
   val slf4j = "org.slf4j" % "slf4j-api" % "2.0.13"
   val logbackClassic =  "ch.qos.logback" % "logback-classic" % "1.4.14"
+  // val log4jBridge = "org.slf4j" % "log4j-over-slf4j" % "2.0.13" // Crucial for Hive/Spark/... legacy logs (might be required!)
   val scopt = "com.github.scopt" %% "scopt" % "4.1.0"
   val typesafeConfig = "com.typesafe" % "config" % "1.3.1"
 

@@ -26,7 +26,7 @@ This fork includes an upgrade to a newer version of the H2 database. Due to chan
 **Before running the new version:**
 
 ```bash
-  rm -f /path/to/mist/recovery.*.db   
+  rm -f $MIST_HOME/recovery.*.db   
   # Remove old H2 database files or backup and manually migrate after new .db files created
 ```
 
@@ -35,6 +35,18 @@ This fork includes an upgrade to a newer version of the H2 database. Due to chan
 ```bash
   sbt ++2.13.16 clean assembly
 ```
+### Update an Existing MIST Installation
+
+```bash
+
+cp mist/master/target/scala-2.13/mist-master-assembly-1.1.3.jar $MIST_HOME/mist-master.jar
+cp mist/worker/target/scala-2.13/mist-worker-assembly-1.1.3.jar $MIST_HOME/mist-worker.jar
+rm -r $MIST_HOME/configs/logging/log4j*
+cp configs/logging/logback* $MIST_HOME/configs/logging/
+cp bin/mist-master $MIST_HOME/bin/mist-master
+cp bin/mist-function-info-provider $MIST_HOME/bin/mist-function-info-provider
+```
+
 ---  
 
 
